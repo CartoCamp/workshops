@@ -1,0 +1,5 @@
+cartodb==0.8.1
+jupyter==1.0.0
+numpy==1.12.0
+scipy==0.18.1
+
