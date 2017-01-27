@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "name": "map-config-test",
+  "auth": {
+    "method": "open"
+  },
+  "layergroup": {
+    "layers": [{
+      "type": "mapnik",
+      "options": {
+        "cartocss_version": "2.1.1",
+        "cartocss": "#layer { polygon-fill: #FFF; }",
+        "sql": "select * from ne_adm0_europe"
+      }
+    }]
+  }
+}
