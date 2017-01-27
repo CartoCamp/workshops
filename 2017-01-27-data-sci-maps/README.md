@@ -27,7 +27,7 @@ We'll work from a [virtual environment](http://docs.python-guide.org/en/latest/d
 Clone the CartoCamp workshop repo and move into the directory for today's workshops.
 
 ```bash
-$ git clone https://github.com/ohasselblad/workshops.git
+$ git clone https://github.com/CartoCamp/workshops.git
 $ cd workshops/2017-01-27-data-sci-maps
 ```
 
@@ -50,3 +50,6 @@ scipy==0.18.1
 pandas=0.19.2
 requests=2.13.0
 ```
+
+## Danny's Portion of the workshop
+[Link to Danny's Notebooks](https://github.com/CartoDB/cartocamp/tree/master/20170127)
