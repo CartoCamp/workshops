@@ -45,7 +45,8 @@ $ source venv/bin/activate
 ```text
 cartodb==0.8.1
 jupyter==1.0.0
-requests==2.13.0
 numpy==1.12.0
 scipy==0.18.1
+pandas=0.19.2
+requests=2.13.0
 ```
