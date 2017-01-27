@@ -49,3 +49,6 @@ requests==2.13.0
 numpy==1.12.0
 scipy==0.18.1
 ```
+
+## Danny's Portion of the workshop
+[Link to Danny's Notebooks](https://github.com/CartoDB/cartocamp/tree/master/20170127)
