@@ -33,6 +33,8 @@ $ cd workshops/2017-01-27-data-sci-maps
 
 ### Setup environment
 
+If you don't have `virtualenv` get it with `pip install virtualenv`.
+
 ```bash
 $ virtualenv venv
 $ source venv/bin/activate
