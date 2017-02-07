@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Leaflet Layers Control Example</title>
+	<meta charset="utf-8" />
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<link rel="stylesheet" href="https://npmcdn.com/leaflet@1.0.0-rc.3/dist/leaflet.css" />
+	<script src="https://npmcdn.com/leaflet@1.0.0-rc.3/dist/leaflet.js"></script>
+	<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+
+	<style>
+		#map {
+			width: 1420px;
+			height: 760px;
+			align: center;
+		}
+		.info {
+			padding: 16px 10px;
+			font: 14px/16px Arial, Helvetica, sans-serif;
+			background: white;
+			background: rgba(255,255,255,0.8);
+			box-shadow: 0 0 15px rgba(0,0,0,0.2);
+			border-radius: 5px;
+		}
+		.info h4 {
+			margin: 0 0 5px;
+			color: 'white';
+		}
+		.legend {
+			text-align: left;
+			line-height: 18px;
+			color: #555;
+		}
+		.legend i {
+			width: 18px;
+			height: 18px;
+			float: left;
+			margin-right: 8px;
+			opacity: 0.7;
+		}
+		button {
+  	position:absolute;
+  	top:410px;
+		}
+	</style>
+</head>
+<body>
+	<div id="map"></div>
+
+	<script src="https://npmcdn.com/leaflet@1.0.0-rc.3/dist/leaflet.js"></script>
+	<script type="text/javascript">
+		var prim_res = "https://mehak-carto.cartodb.com/api/v2/sql?q=SELECT%20*%20FROM%20primary_results_transposed_simplified&format=geojson&filename=primary_results_transposed_simplified";
+		var map = L.map('map').setView([39.0119, -98.4842], 5);
+	
+		L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
+			attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/attributions">CARTO</a>'
+		}).addTo(map);
+		var info = L.control();
+		info.onAdd = function(map) {
+			this._div = L.DomUtil.create('div', 'info');
+			this.update();
+			return this._div;
+		};
+		info.update = function(props) {
+			this._div.innerHTML = '<h4>US Primary Election Data 2016</h4>' +  '<br />' + (props ?
+				props.county + ' County' + '<br />' + '<br />' +
+				'<b>Hillary # of votes: ' + props.hillary_votes + '</b><br />' +
+				                     'Fraction of votes: ' + props.hillary_fraction + '<br />' + '<br />' +
+							'<b>Bernie # of votes: ' + props.bernie_votes + '</b><br />' +
+							'Fraction of votes: ' + props.bernie_fraction
+				: 'Hover over a county');
+		};
+		info.addTo(map);
+		// get color depending on Bernie Sanders vote fractions value
+		function getColor(b, h) {
+			return b <=1.0 & b>=0.85 ? '#9e0142' :
+			       b <0.85 & b>=0.7 ? '#d53e4f' :
+						 b < 0.7 & b>=0.55 ? '#f46d43':
+						 b <0.55 & b>=0.4 ? '#fdae61':
+						 b <0.4 &  b>=0.35 ? '#abdda4':
+						 b < 0.35 & b>=0.2 ? '#66c2a5':
+			       b < 0.2 & b>=0.05 ? '#3288bd' :
+			       b < 0.05 & b>=0 ? '#5e4fa2' :
+			       			'#878787' ;
+		}
+		function style(feature) {
+			return {
+				weight: 0.6,
+				opacity: 1,
+				color: 'white',
+				dashArray: '2',
+				fillOpacity: 0.6,
+				fillColor: getColor(feature.properties.bernie_fraction, feature.properties.hillary_fraction)
+			};
+		}
+		function highlightFeature(e) {
+			console.log('highlightFeature was entered');
+			var layer = e.target;
+			layer.setStyle({
+				weight: 2,
+				color: 'grey',
+				dashArray: '',
+				fillOpacity: 0.7
+			});
+			if (!L.Browser.ie && !L.Browser.opera) {
+				layer.bringToFront();
+			}
+			info.update(layer.feature.properties);
+		}
+		var geojson;
+		function resetHighlight(e) {
+			geojson.resetStyle(e.target);
+			info.update();
+		}
+		function zoomToFeature(e) {
+			console.log('zoomToFeature was triggered');
+			map.fitBounds(e.target.getBounds());
+			console.log(e);
+		}
+		function onEachFeature(feature, layer) {
+			console.log('onEachFeature was entered');
+			layer.on({
+				mouseover: highlightFeature,
+				mouseout: resetHighlight,
+				click: zoomToFeature
+			});
+		}
+		$.getJSON ("https://mehak-carto.cartodb.com/api/v2/sql?q=SELECT%20*%20FROM%20primary_results_transposed_simplified%20&format=geojson&filename=primary_results_transposed_simplified", function(data) {
+			console.log('geojson retrieved');
+			geojson = L.geoJson(data, {
+				style: style,
+				onEachFeature: onEachFeature
+			}).addTo(map);
+		});
+		map.attributionControl.addAttribution('Primary Election Results 2016 &copy; <a href="https://www.kaggle.com/">Kaggle</a>');
+		var legend = L.control({position: 'bottomright'});
+		legend.onAdd = function (map) {
+			var div = L.DomUtil.create('div', 'info legend'),
+				grades = [1.0, 0.85, 0.7, 0.55, 0.40, 0.35, 0.2, 0.05],
+				labels = ['<strong>Fraction Vote Bernie Sanders</strong>'],
+				from, to;
+			var x=0.99;
+			for (var i = 0; i < grades.length; i++) {
+				from = grades[i];
+				to = grades[i + 1];
+				labels.push(
+					'<i style="background:' + getColor(x,1-x) + '"></i> ' +
+					from + (to ? '&ndash;' + to : '+'));
+					x-=0.14;
+			}
+			div.innerHTML = labels.join('<br>');
+			return div;
+		};
+		legend.addTo(map);
+	</script>
+</body>
+</html>
