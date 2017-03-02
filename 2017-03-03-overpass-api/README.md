@@ -1,8 +1,6 @@
 # OpenStreetMap Overpass API
 
-![alt text](http://wiki.openstreetmap.org/w/images/7/79/Public-images-osm_logo.svg "OpenStreetMap")
-
-![alt text](http://wiki.openstreetmap.org/w/images/thumb/b/b5/Overpass_API_logo.svg/800px-Overpass_API_logo.svg.png "Overpass API")
+![alt text](http://wiki.openstreetmap.org/w/images/7/79/Public-images-osm_logo.svg "OpenStreetMap") ![alt text](http://wiki.openstreetmap.org/w/images/thumb/b/b5/Overpass_API_logo.svg/800px-Overpass_API_logo.svg.png "Overpass API")
 
 OpenStreetMap's [Overpass API](http://wiki.openstreetmap.org/wiki/Overpass_API) is a "read-only API that serves up custom selected parts of the OSM map data." This CartoCamp workshop is an introduction to the query language of Overpass and how you can use it to obtain points, lines, and shapes for your maps.
 
