@@ -110,7 +110,7 @@ out body;
 out skel qt;
 ```
 
-## More Reources
+## More Resources
 
 - Tons of [examples](http://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_API_by_Example)
 - What kind of tags can I filter by? Track all OSM tags [here](<https://taginfo.openstreetmap.org>).
