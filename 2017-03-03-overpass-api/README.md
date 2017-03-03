@@ -115,3 +115,4 @@ out skel qt;
 - Tons of [examples](http://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_API_by_Example)
 - What kind of tags can I filter by? Track all OSM tags [here](<https://taginfo.openstreetmap.org>).
 - [CartoCamp LearnOverpass](http://michellemho.github.io/learnoverpass//en/)
+- Best Wiki resource for learning Overpass QL <http://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL>
