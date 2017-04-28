@@ -54,6 +54,8 @@ And follow from `source venv/bin/activate`
 --------------------------------------------
 ### Starting with the main file:
 
+#### Inspiration for Project: http://nyctaxi.herokuapp.com/ - thank you Chris Whong!
+
 Source: https://s3.amazonaws.com/tripdata/index.html
 
 Download the main file here: https://www.dropbox.com/s/brrp4o0sxrm70yy/citibike_mar17.csv?dl=0
