@@ -14,14 +14,13 @@ Once there, do the following to grab the working folder into your system:
 
 ```
 git clone https://github.com/CartoCamp/workshops.git
-cd cd workshops/2017-04-28-carto-camp-routing
+cd workshops/2017-04-28-carto-camp-routing
 ```
 Once within the folder - we will now set up and activate our virtual environment so we do not have to worry about version dicrepancies!
 
 Fire up your terminal and do the following:
 
 ```bash
-cd carto-camp-routing
 virtualenv venv
 source venv/bin/activate
 pip install -r requirements.txt
