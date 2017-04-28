@@ -55,7 +55,9 @@ And follow from `source venv/bin/activate`
 
 Source: https://s3.amazonaws.com/tripdata/index.html
 
-Within the `carto-camp-routing` folder you just cloned you will see a file called `citibike_mar17.csv`. Upload that file into your CARTO account. We do this so we can perform custom SQL queries and use the file directly in Python.
+Download the main file here: https://www.dropbox.com/s/brrp4o0sxrm70yy/citibike_mar17.csv?dl=0
+These are all the citibike trips for the month of March'17.
+Upload that file into your CARTO account. We do this so we can perform custom SQL queries and use the file directly in Python.
 
 < It may take a while - let's chat till then! :) >
 
