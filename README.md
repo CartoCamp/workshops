@@ -6,6 +6,7 @@ Join a CartoCamp from our Meetup page: https://www.meetup.com/cartocamp/
 
 ## CartoCamp Workshops
 
+* April 28, 2017 - Mehak Sachdeva and Manushi Majumdar **Routing/Directions + D3 (Part 1)**: [**Routing/Directions**](https://github.com/CartoCamp/workshops/tree/master/2017-04-28-carto-camp-routing) and [**Networks**](https://github.com/ManushiM/CartoCamp_Workshops)
 * March 31, 2017 - Ray Cha, [**Transit Data Mapping Basics**](https://weatherpattern.github.io/transit-data-basics/#/)
 * March 3, 2017 - Michelle Ho, [**OpenStreetMap Overpass API**](https://github.com/CartoCamp/workshops/tree/master/2017-03-03-overpass-api) 
 * January 27, 2017 - Andy Eschbacher and Danny Sheehan, [**Data Science with Maps**](https://github.com/CartoCamp/workshops/tree/master/2017-01-27-data-sci-maps)
