@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>CARTO.js ON FIRE!</title>
+    <!-- Include Leaflet 1.2.0 Library -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.2.0/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.2.0/dist/leaflet.js"></script>
+    <!-- Fonts -->
+    <!-- <link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700' rel='stylesheet' type='text/css'> -->
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,600,700" rel="stylesheet" type='text/css'>
+    <!-- Include CARTO.js Library -->
+    <script src="https://cartodb-libs.global.ssl.fastly.net/carto.js/v4.0.0-beta.10/carto.min.js"></script>
+
+    <!-- emojis! -->
+    <link href="https://afeld.github.io/emoji-css/emoji.css" rel="stylesheet">
+
+    <style>
+      * { margin:0; padding:0; }
+      html { box-sizing:border-box; height:100%; }
+    /*  body { background:#f2f6f9; height:100%; font-family:"Open sans", Helvetica, Arial, sans-serif; }*/
+      body { background:#f2f6f9; height:100%; font-family: 'Roboto', sans-serif; }
+      #container { display:flex; width:100%; height:100%; }
+      #map { flex:1; margin:0px; }
+      #widgets { width:250px; margin:10px 10px 10px 0; }
+      .widget { background:white; padding:10px; margin-bottom:10px; }
+      .widget h1 { font-size:1.2em; }
+      .widget-category li { margin:10px 0 0 30px; }
+      button { background-color:#F15743; width: 100%; padding: 10px; margin: 2px; color: #FFF; border: none; font-weight: bold; }
+      ul{ list-style-type: none; }
+
+      /* Tooltip container */
+      .tooltip {
+          position: relative;
+          display: inline-block;
+          border-bottom: 0px dotted black; /* If you want dots under the hoverable text */
+      }
+      /* Tooltip text */
+      .tooltip .tooltiptext {
+          visibility: hidden;
+          width: 190px;
+          background-color: #555;
+          color: #fff;
+          text-align: center;
+          padding: 3px 0;
+          border-radius: 3px;
+          /* Position the tooltip text */
+          position: absolute;
+          z-index: 1;
+          bottom: 125%;
+          left: 50%;
+          margin-left: -60px;
+          /* Fade in tooltip */
+          opacity: 0;
+          transition: opacity 1s;
+      }
+      /* Tooltip arrow */
+      .tooltip .tooltiptext::after {
+          content: "";
+          position: absolute;
+          top: 100%;
+          left: 50%;
+          margin-left: -3px;
+          border-width: 3px;
+          border-style: solid;
+          border-color: #555 transparent transparent transparent;
+      }
+      /* Show the tooltip text when you mouse over the tooltip container */
+      .tooltip:hover .tooltiptext {
+          visibility: visible;
+          opacity: 1;
+    }
+    </style>
+  </head>
+  <body>
+    <div id="container">
+      <div id="map"></div>
+      <div id="widgets">
+        <div id="fireCategoryWidget" class="widget widget-category">
+          <h1>Fires By Category</h1>
+          <ul class="js-fires_cat" id='some_cats'>
+          </ul>
+        </div>
+        <div class="widget">
+          <input id="filterCheckbox" type="checkbox" onclick="applyBoundingBox(this);">
+          <label for="filterCheckbox"><b>Apply Bounding Box Filter</b></label>
+        </div>
+        <button id="btnBiggest">top 100 fires by size</button>
+        <button id="btnAll">all fires</button>
+        <div class="widget">
+          Data from <a href="https://www.kaggle.com/rtatman/188-million-us-wildfires">Kaggle</a>
+        </div>
+      </div>
+    </div>
+    <script>
+
+      // 1. Setting up the Leaflet Map
+      // 1.1 Creating the Leaflet Map
+      var map = L.map('map').setView([42.877742, -97.380979], 5);
+
+      // 1.2 Adding basemap and labels layers
+      // Adding Voyager Basemap
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/dark_nolabels/{z}/{x}/{y}.png', {
+        maxZoom: 18,
+        attribution: '&copy;<a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy;<a href="https://carto.com/attribution">CARTO</a>'
+      }).addTo(map);
+
+      // 1.3 Add basemap labels. Comment these lines out if you don't want to add Voyager labels!
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}.png', {
+        maxZoom: 18,
+        attribution: '&copy;<a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy;<a href="https://carto.com/attribution">CARTO</a>',
+        zIndex: 100
+      }).addTo(map);
+
+
+      // 2 Defining a carto.Client. For public datasets, you don't need an API key
+      var client = new carto.Client({
+        apiKey: 'fake',
+        username: 'parksgps'
+      });
+
+      // 3. Displaying the wildfire data on the map
+
+      // 3.1 Defining the wildfires layer
+      // Only grab the columns we're interested in here
+      var query = 'SELECT the_geom, the_geom_webmercator, cartodb_id, stat_cause_descr, fire_size, fire_name, fire_year FROM parksgps.wildfres_2006_present';
+      var wildfiresDataset = new carto.source.SQL(query);
+      // Define another carto.source.SQL because we will be updating the query later
+      var wildfiresSQL = new carto.source.SQL(query);
+
+      // 3.2 Define basic styling options with CartoCSS
+      var wildfiresStyle = new carto.style.CartoCSS(`
+        #layer {
+		  marker-width: 1.5;
+		  marker-fill: ramp([stat_cause_descr], (#5F4690, #1D6996, #38A6A5, #0F8554, #73AF48, #EDAD08, #E17C05, #CC503E, #94346E, #6F4070, #666666), ("Debris Burning", "Miscellaneous", "Arson", "Lightning", "Missing/Undefined", "Equipment Use", "Campfire", "Children", "Smoking", "Railroad"), "=");
+		  marker-fill-opacity: 1;
+		  marker-allow-overlap: true;
+		  marker-line-width: 0;
+		  marker-line-color: #FFFFFF;
+		  marker-line-opacity: 1;
+		  [zoom>5]{
+		  	 marker-width: 2;
+		  	 marker-fill-opacity: 0.9;
+		  }
+		   [zoom>10]{
+		  	 marker-width: 5;
+		  	 marker-fill-opacity: 0.9;
+		  }
+		}`);
+
+    // 3.3 Define another styling option for the biggest wildfires
+    var bigWildfiresStyle = new carto.style.CartoCSS(`
+      #layer {
+          marker-width: ramp([fire_size], range(4, 40), equal(10));
+          marker-fill: ramp([stat_cause_descr], (#5F4690, #1D6996, #38A6A5, #0F8554, #73AF48, #EDAD08, #E17C05, #CC503E, #94346E, #6F4070, #666666), ("Debris Burning", "Miscellaneous", "Arson", "Lightning", "Missing/Undefined", "Equipment Use", "Campfire", "Children", "Smoking", "Railroad"), "=");
+          marker-fill-opacity: 1;
+          marker-allow-overlap: true;
+          marker-line-width: 0;
+          marker-line-color: #FFFFFF;
+          marker-line-opacity: 1;
+          [zoom>5]{
+             marker-fill-opacity: 0.9;
+          }
+           [zoom>10]{
+             marker-fill-opacity: 0.9;
+          }
+          }
+      #markers {
+    marker-file: url(https://image.flaticon.com/icons/svg/24/24143.svg);
+    }`);
+
+    // Create a layer object, combining a source and style.
+    // Identify columns that should be accessible on mouseover
+    var wildfires = new carto.layer.Layer(wildfiresDataset, wildfiresStyle, {
+          featureOverColumns: ['fire_name', 'fire_size', 'fire_year']
+        });
+
+    // 3.4 Adding the layer(s) to the client
+    client.addLayers([wildfires]);
+
+    // // 3.5 Adding the layer(s) to the map
+    client.getLeafletLayer().addTo(map);
+
+    // Creating a pop-up on the layer object
+    var popup = L.popup();
+    wildfires.on('featureOver', function (featureEvent) {
+      popup.setLatLng(featureEvent.latLng);
+      // some HTML for formatting the pop-up content, get emoji from the style library
+      popup.setContent(`<h2>Fire Name: ${featureEvent.data.fire_name}</h2>
+                        <i class="em em-fire"
+                           style="width: ${Math.log(Math.ceil(featureEvent.data.fire_size))+20}px;
+                                  height: ${Math.log(Math.ceil(featureEvent.data.fire_size))+20}px;">
+                        </i>
+                        <p style="font-size:16px";><strong>Fire size (acres):</strong> ${featureEvent.data.fire_size.toFixed(2)}</p>
+                        <p style="font-size:16px";><strong>Year of Discovery:</strong> ${featureEvent.data.fire_year}</p>
+                        <p>`);
+      popup.openOn(map);
+    });
+    wildfires.on('featureOut', function (featureEvent) {
+      popup.removeFrom(map);
+    });
+
+    // When click on button --> the query will show top 100 fires.
+    document.querySelector('#btnBiggest').addEventListener('click', () => {
+      wildfiresDataset.setQuery(query + ' ORDER BY fire_size DESC LIMIT 100');
+      wildfires.setStyle(bigWildfiresStyle);
+    });
+    // When clicked on --> the query will show all fires, the original wildfireDataset query
+    document.querySelector('#btnAll').addEventListener('click', () => {
+      wildfiresDataset.setQuery(query);
+      wildfires.setStyle(wildfiresStyle);
+    });
+
+    // // 4.1 Defining a category dataview
+    var wildfiresDataView = new carto.dataview.Category(wildfiresSQL, 'stat_cause_descr', {
+      limit: 14,
+      operation: carto.operation.count,
+      operationColumn: 'fire_size'});
+
+    // 4.2 Listening to data changes on the dataview
+    wildfiresDataView.on('dataChanged', function (newData) {
+      refreshWildfiresWidget(newData.categories);
+      categoryData =newData.categories;
+    });
+
+    colorDict = {"Debris Burning":'#5F4690',
+                "Miscellaneous":'#1D6996',
+                "Arson":'#38A6A5',
+                "Lightning":'#0F8554',
+                "Missing/Undefined":'#73AF48',
+                "Equipment Use":'#EDAD08',
+                "Campfire":'#E17C05',
+                "Children":'#CC503E',
+                "Smoking":'#94346E',
+                "Railroad":' #6F4070'}
+
+    // Define how the Widget updates upon changes to the wildfiresDataView
+    var refreshWildfiresWidget = function (data) {
+      var $widget = document.querySelector('#fireCategoryWidget');
+      var $wildfiresTypes = $widget.querySelector('.js-fires_cat');
+
+      // Remove whatever was in the category widget beforehand
+      while($wildfiresTypes.firstChild) {
+        $wildfiresTypes.removeChild($wildfiresTypes.firstChild);
+      }
+      // iteratively add list elements
+      if (data) {
+        for (var wildfiretype of data) {
+          var $li = document.createElement('li');
+          // Adding a tooltip/hover action
+          $li.className = 'tooltip';
+          $li.setAttribute("id", wildfiretype.name)
+          var x = document.createElement('span');
+          var t = document.createTextNode("Finding all " + wildfiretype.name.toLowerCase() + " fires");
+          x.className = 'tooltiptext';
+          x.appendChild(t); // Append the hover text to span object
+          $li.appendChild(x); // Append span object to the list object
+
+          // set colors of list element
+          if(colorDict[wildfiretype.name])
+            $li.style.color = colorDict[wildfiretype.name];
+          else{
+            $li.style.color ="black";
+          }
+
+          // Set the text of the list element as wildfire category name + the value (in this case, the count)
+          listText =document.createTextNode(wildfiretype.name + ': ' + wildfiretype.value);
+          $li.appendChild(listText);
+          $wildfiresTypes.appendChild($li);
+          }
+        }
+      }
+
+      // Get the element, add a mouseover listener...
+      document.getElementById("some_cats").addEventListener("mouseover", function(e) {
+      	// If it was a list item...
+      	if(e.target && e.target.nodeName == "LI") {
+      		// List item found!  Update the wildfireDataset query!
+          wildfiresDataset.setQuery(query + ' WHERE stat_cause_descr = \'' + e.target.id + '\'');
+            wildfires.setStyle(wildfiresStyle);
+            // console.log just to check
+            console.log(wildfiresDataset.getQuery());
+      	}
+      });
+
+      // Define what should happen when you mouseover...
+      document.getElementById("some_cats").addEventListener("mouseout", function(e) {
+        // e.target is the clicked element!
+        // If it was a list item
+        if(e.target && e.target.nodeName == "LI") {
+          // List item found! Go back to the original query!
+          wildfiresDataset.setQuery(query);
+            wildfires.setStyle(wildfiresStyle);
+            console.log(wildfiresDataset.getQuery());
+        }
+      });
+
+    // // 4.3 Adding the dataview to the client
+    client.addDataview(wildfiresDataView);
+
+    // 5 Adding the bounding box filter
+    // 5.1 Defining the bounding box filter for the map
+    var boundingBoxFilter = new carto.filter.BoundingBoxLeaflet(map);
+    // 5.2 Apply the bounding box filter to the dataview
+    var applyBoundingBox = function (event) {
+      if (event.checked) {
+        wildfiresDataView.addFilter(boundingBoxFilter);
+      } else {
+        wildfiresDataView.removeFilter(boundingBoxFilter);
+      }
+    }
+    </script>
+  </body>
+</html>
